@@ -29,13 +29,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mDbHelper = new FeedReaderDbHelper(getBaseContext());
+        String TABLE_NAME = "beagonslocal";
+        mDbHelper = new FeedReaderDbHelper(getBaseContext(),TABLE_NAME);
 
-        Insert();
-        Read();
+        Insert(TABLE_NAME);
+        Read(TABLE_NAME);
     }
 
-    public void Insert(){
+    public void Insert(String TABLE_NAME){
         // Gets the data repository in write mode
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
@@ -47,18 +48,18 @@ public class MainActivity extends AppCompatActivity {
         values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE, "{Esto es un JSON}");
 
 // Insert the new row, returning the primary key value of the new row
-        long newRowId = db.insert(FeedReaderContract.FeedEntry.TABLE_NAME, null, values);
+        long newRowId = db.insert(TABLE_NAME, null, values);
         Log.d(TAG,"insert: "+newRowId);
     }
 
-    public void Read(){
+    public void Read(String TABLE_NAME){
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
         // How you want the results sorted in the resulting Cursor
         String sortOrder =
                 FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE + " DESC";
 
-        Cursor  cursor = db.rawQuery("select * from "+FeedReaderContract.FeedEntry.TABLE_NAME,null);
+        Cursor  cursor = db.rawQuery("select * from "+TABLE_NAME,null);
 
         List itemIds = new ArrayList<>();
         while(cursor.moveToNext()) {

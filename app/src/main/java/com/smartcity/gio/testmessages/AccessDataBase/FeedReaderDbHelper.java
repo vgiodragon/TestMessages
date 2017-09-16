@@ -23,12 +23,12 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
                     //="DROP TABLE IF EXISTS " + FeedReaderContract.FeedEntry.TABLE_NAME;
 
     public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_NAME = "FeedReader.db";
+    public static final String DATABASE_NAME = "Beagons.db";
 
     public FeedReaderDbHelper(Context context, String TABLE_NAME) {
-
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         setSQL_CREATE_ENTRIES(TABLE_NAME);
+        setSQL_DELETE_ENTRIES(TABLE_NAME);
     }
 
     public void onCreate(SQLiteDatabase db) {
@@ -53,6 +53,6 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
     }
 
     public void setSQL_DELETE_ENTRIES(String TABLE_NAME) {
-        this.SQL_DELETE_ENTRIES = SQL_DELETE_ENTRIES;
+        SQL_DELETE_ENTRIES ="DROP TABLE IF EXISTS " + TABLE_NAME;
     }
 }

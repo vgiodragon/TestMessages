@@ -43,8 +43,15 @@ public class MyServiceMQTT extends Service {
         //Creating new thread for my service
         //Always write your long running tasks in a separate thread, to avoid ANR
         //Utils.StartSubcriptiontoAlarms(this);
-        Subcriptor subcriptorGlobal= new Subcriptor(getBaseContext(),Utils.getIpglobal());
-        Subcriptor subcriptorLocal= new Subcriptor(getBaseContext(),Utils.getIplocal());
+        Subcriptor subcriptorGlobal= new Subcriptor(getBaseContext(),Utils.getIpglobal(),"beagonslocal");
+        Subcriptor subcriptorLocal= new Subcriptor(getBaseContext(),Utils.getIplocal(),"beagonsglobal");
+
+
+
+        /**
+         subcriptorGlobal.creoClienteMQTT();
+         subcriptorLocal.creoClienteMQTT();
+         */
 
         return START_STICKY;
     }
@@ -59,10 +66,14 @@ public class MyServiceMQTT extends Service {
         private Context ctx;
         private MqttAndroidClient mqttAndroidClient;
         private String ip;
+        FeedReaderDbHelper mDbHelper;
+        String TABLE_NAME;
 
-        public Subcriptor(Context ctx, String ip) {
+        public Subcriptor(Context ctx, String ip,String TABLE_NAME) {
             this.ctx = ctx;
             this.ip = ip;
+            this.TABLE_NAME = TABLE_NAME;
+            mDbHelper = new FeedReaderDbHelper(getBaseContext(),TABLE_NAME);
         }
 
         public void creoClienteMQTT(){
@@ -85,7 +96,9 @@ public class MyServiceMQTT extends Service {
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
                     Log.d("GIODEBUG_MQTT_SA","creoClienteMQTT_Llego del topic " + topic + ": " + new String(message.getPayload()));
 
+
                     // Store!!
+                    Insert(TABLE_NAME,new String(message.getPayload()));
                 }
 
                 @Override
@@ -119,7 +132,7 @@ public class MyServiceMQTT extends Service {
         }
     }
 
-    public void Insert(){
+    public void Insert(String TABLE_NAME,String mnsj){
         // Gets the data repository in write mode
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
@@ -128,21 +141,21 @@ public class MyServiceMQTT extends Service {
 // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
         values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE, String.valueOf(currentDateandTime));
-        values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE, "{Esto es un JSON}");
+        values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE, mnsj);
 
 // Insert the new row, returning the primary key value of the new row
-        long newRowId = db.insert(FeedReaderContract.FeedEntry.TABLE_NAME, null, values);
+        long newRowId = db.insert(TABLE_NAME, null, values);
         Log.d(TAG,"insert: "+newRowId);
     }
 
-    public void Read(){
+    public void Read(String TABLE_NAME){
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
         // How you want the results sorted in the resulting Cursor
         String sortOrder =
                 FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE + " DESC";
 
-        Cursor cursor = db.rawQuery("select * from "+FeedReaderContract.FeedEntry.TABLE_NAME,null);
+        Cursor cursor = db.rawQuery("select * from "+TABLE_NAME,null);
 
         List itemIds = new ArrayList<>();
         while(cursor.moveToNext()) {
