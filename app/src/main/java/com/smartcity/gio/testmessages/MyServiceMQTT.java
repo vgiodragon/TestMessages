@@ -28,7 +28,10 @@ import java.util.List;
 
 public class MyServiceMQTT extends Service {
     private final String TAG="GIODEBUG";
-    FeedReaderDbHelper mDbHelper;
+
+    Subcriptor subcriptorGlobal;
+    Subcriptor subcriptorLocal;
+
     public MyServiceMQTT() {
     }
 
@@ -43,15 +46,17 @@ public class MyServiceMQTT extends Service {
         //Creating new thread for my service
         //Always write your long running tasks in a separate thread, to avoid ANR
         //Utils.StartSubcriptiontoAlarms(this);
-        Subcriptor subcriptorGlobal= new Subcriptor(getBaseContext(),Utils.getIpglobal(),"beagonslocal");
-        Subcriptor subcriptorLocal= new Subcriptor(getBaseContext(),Utils.getIplocal(),"beagonsglobal");
+        Log.d(TAG,"Suscripcion !!");
+        subcriptorGlobal = new Subcriptor(getBaseContext(),Utils.getIpglobal(),"beagonsglobal");
+        subcriptorLocal = new Subcriptor(getBaseContext(),Utils.getIplocal(),"beagonslocal");
 
-
-
-        /**
          subcriptorGlobal.creoClienteMQTT();
          subcriptorLocal.creoClienteMQTT();
-         */
+        //String TABLE_NAME="beagonslocal";
+        //mDbHelper = new FeedReaderDbHelper(getBaseContext(),TABLE_NAME);
+
+        //Insert(TABLE_NAME);
+        //Read(TABLE_NAME);
 
         return START_STICKY;
     }
@@ -74,6 +79,9 @@ public class MyServiceMQTT extends Service {
             this.ip = ip;
             this.TABLE_NAME = TABLE_NAME;
             mDbHelper = new FeedReaderDbHelper(getBaseContext(),TABLE_NAME);
+
+            //Insert(TABLE_NAME,"whatever");
+            //Read(TABLE_NAME);
         }
 
         public void creoClienteMQTT(){
@@ -85,6 +93,7 @@ public class MyServiceMQTT extends Service {
             options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1);
             options.setUserName(Utils.getUserMqtt());
             options.setPassword(Utils.getPassMqtt().toCharArray());
+            options.setAutomaticReconnect(true);
 
             mqttAndroidClient.setCallback(new MqttCallback() {
                 @Override
@@ -95,10 +104,9 @@ public class MyServiceMQTT extends Service {
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
                     Log.d("GIODEBUG_MQTT_SA","creoClienteMQTT_Llego del topic " + topic + ": " + new String(message.getPayload()));
-
-
                     // Store!!
                     Insert(TABLE_NAME,new String(message.getPayload()));
+                    Read(TABLE_NAME);
                 }
 
                 @Override
@@ -112,7 +120,7 @@ public class MyServiceMQTT extends Service {
                     @Override
                     public void onSuccess(IMqttToken asyncActionToken) {
                         // We are connected
-                        //Log.d("GIODEBUG_MQTT_SA", "IMqttActionListener_onSuccess_"+alarm.getTopic()+" on");
+                        Log.d("GIODEBUG_MQTT_SA", "IMqttActionListener_onSuccess_"+Utils.getTopicMqtt()+" on");
                         try {
                             mqttAndroidClient.subscribe(Utils.getTopicMqtt(), 0);
                         } catch (MqttException e) {
@@ -130,41 +138,40 @@ public class MyServiceMQTT extends Service {
                 e.printStackTrace();
             }
         }
-    }
+        public void Insert(String TABLE_NAME, String mnsj){
+            // Gets the data repository in write mode
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-    public void Insert(String TABLE_NAME,String mnsj){
-        // Gets the data repository in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HHmmss.SSS");
-        String currentDateandTime = sdf.format(new Date());
+            SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HHmmss.SSS");
+            String currentDateandTime = sdf.format(new Date());
 // Create a new map of values, where column names are the keys
-        ContentValues values = new ContentValues();
-        values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE, String.valueOf(currentDateandTime));
-        values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE, mnsj);
+            ContentValues values = new ContentValues();
+            values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE, String.valueOf(currentDateandTime));
+            values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE,mnsj);
 
 // Insert the new row, returning the primary key value of the new row
-        long newRowId = db.insert(TABLE_NAME, null, values);
-        Log.d(TAG,"insert: "+newRowId);
-    }
-
-    public void Read(String TABLE_NAME){
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        // How you want the results sorted in the resulting Cursor
-        String sortOrder =
-                FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE + " DESC";
-
-        Cursor cursor = db.rawQuery("select * from "+TABLE_NAME,null);
-
-        List itemIds = new ArrayList<>();
-        while(cursor.moveToNext()) {
-            long itemId = cursor.getLong(
-                    cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry._ID));
-            itemIds.add(itemId);
+            long newRowId = db.insert(TABLE_NAME, null, values);
+            Log.d(TAG,TABLE_NAME+"-insert: "+newRowId);
         }
-        Log.d(TAG,"item: "+itemIds.toString());
-        cursor.close();
 
+        public void Read(String TABLE_NAME){
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+            // How you want the results sorted in the resulting Cursor
+            String sortOrder =
+                    FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE + " DESC";
+
+            Cursor  cursor = db.rawQuery("select * from "+TABLE_NAME,null);
+
+            List itemIds = new ArrayList<>();
+            while(cursor.moveToNext()) {
+                long itemId = cursor.getLong(
+                        cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry._ID));
+                itemIds.add(itemId);
+            }
+            Log.d(TAG,"item: "+itemIds.toString());
+            cursor.close();
+
+        }
     }
 }
