@@ -8,15 +8,24 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderDbHelper;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,8 +37,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String[] PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.WAKE_LOCK};
-    int PERMISSION_ALL = 3;
+            Manifest.permission.WAKE_LOCK,Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    int PERMISSION_ALL = 4;
     private final int code_request=1234;
 
     @Override
@@ -46,9 +55,47 @@ public class MainActivity extends AppCompatActivity {
         //Insert(TABLE_NAME);
         //Read(TABLE_NAME);
 
+        //Intent intent = new Intent(this, MyServiceMQTT.class);
+        //startService(intent);
+    }
+
+    public void startService(View view){
         Intent intent = new Intent(this, MyServiceMQTT.class);
         startService(intent);
     }
+
+    public void stopService(View view){
+        Intent intent = new Intent(this, MyServiceMQTT.class);
+        stopService(intent);
+    }
+
+    public void saveFile(View view){
+        //Read("beagonsglobal");
+
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/Beagons");
+        Log.d("GIODEBUG","root"+root);
+        String filename = "beagonsglobal.csv";
+
+        File file = new File (myDir, filename);
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            //out.write(string.getBytes());
+            ArrayList<Publicacion>publicacions = Read("beagonsglobal");
+
+            for (Publicacion publicacion : publicacions)
+                out.write(publicacion.toString().getBytes());
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(this, "Saved!!", Toast.LENGTH_SHORT)
+                .show();
+    }
+
+
 
     public static boolean hasPermissions(Context context, String... permissions) {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
@@ -94,7 +141,8 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"insert: "+newRowId);
     }
 
-    public void Read(String TABLE_NAME){
+    public ArrayList<Publicacion> Read(String TABLE_NAME){
+        mDbHelper = new FeedReaderDbHelper(getApplicationContext(),TABLE_NAME);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         // How you want the results sorted in the resulting Cursor
         String sortOrder =
@@ -103,25 +151,43 @@ public class MainActivity extends AppCompatActivity {
         Cursor  cursor = db.rawQuery("select * from "+TABLE_NAME,null);
 // Define a projection that specifies which columns from the database
 // you will actually use after this query.
-        String[] projection = {
-                FeedReaderContract.FeedEntry._ID,
-                FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE,
-                FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE
-        };
 
-        List itemIds = new ArrayList<>();
-        ArrayList elemtns = new ArrayList<String>();
+        ArrayList <Publicacion>elemtns = new ArrayList<>();
+
         while(cursor.moveToNext()) {
-            long itemId = cursor.getLong(
-                    cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry._ID));
             String name =cursor.getString(
                     cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE));
-            itemIds.add(itemId);
-            elemtns.add(name);
-        }
-        Log.d(TAG,"item: "+itemIds.toString());
-        Log.d(TAG,"elemtns: "+elemtns.toString());
+            String hora =cursor.getString(
+                    cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE));
+
+            //elemtns.add(hora+"+"+name);
+
+                String horat[] = hora.split("_");
+                try {
+                    JSONObject jsonObject = new JSONObject(name);
+                    String hora2[]=jsonObject.getString("date").split(" ");
+                    String fecha_llegada = horat[0].substring(0,2)+"/"
+                            +horat[0].substring(2,4)+"/"+horat[0].substring(4);
+                    String hora_llegada = horat[1].substring(0,2)+":"
+                            +horat[1].substring(2,4)+":"+horat[1].substring(4);
+
+                    String fecha_envio2 = hora2[0].replace("-","/");
+                    Publicacion mpublicacion =new Publicacion(fecha_llegada,hora_llegada,
+                            fecha_envio2.substring(2),hora2[1],jsonObject.getDouble("value"));
+                    elemtns.add(mpublicacion);
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        //Log.d(TAG,"item: "+itemIds.toString());
+        //Log.d(TAG,"elemtns: "+elemtns.toString());
+        Log.d(TAG,"size: "+elemtns.size());
         cursor.close();
+        return elemtns;
     }
 }
 

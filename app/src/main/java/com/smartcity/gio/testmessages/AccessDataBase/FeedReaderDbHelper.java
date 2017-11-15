@@ -22,7 +22,7 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
     private String SQL_DELETE_ENTRIES ;
                     //="DROP TABLE IF EXISTS " + FeedReaderContract.FeedEntry.TABLE_NAME;
 
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 5;
     public static final String DATABASE_NAME = "Beagons.db";
 
     public FeedReaderDbHelper(Context context, String TABLE_NAME) {

@@ -48,10 +48,10 @@ public class MyServiceMQTT extends Service {
         //Utils.StartSubcriptiontoAlarms(this);
         Log.d(TAG,"Suscripcion !!");
         subcriptorGlobal = new Subcriptor(getBaseContext(),Utils.getIpglobal(),"beagonsglobal");
-        subcriptorLocal = new Subcriptor(getBaseContext(),Utils.getIplocal(),"beagonslocal");
+        //subcriptorLocal = new Subcriptor(getBaseContext(),Utils.getIplocal(),"beagonslocal");
 
-         subcriptorGlobal.creoClienteMQTT();
-         subcriptorLocal.creoClienteMQTT();
+        subcriptorGlobal.creoClienteMQTT();
+         //subcriptorLocal.creoClienteMQTT();
         //String TABLE_NAME="beagonslocal";
         //mDbHelper = new FeedReaderDbHelper(getBaseContext(),TABLE_NAME);
 
@@ -103,7 +103,7 @@ public class MyServiceMQTT extends Service {
 
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
-                    Log.d("GIODEBUG_MQTT_SA","creoClienteMQTT_Llego del topic " + topic + ": " + new String(message.getPayload()));
+                    //Log.d("GIODEBUG_MQTT_SA","creoClienteMQTT_Llego del topic " + topic + ": " + new String(message.getPayload()));
                     // Store!!
                     Insert(TABLE_NAME,new String(message.getPayload()));
                     Read(TABLE_NAME);
@@ -142,7 +142,7 @@ public class MyServiceMQTT extends Service {
             // Gets the data repository in write mode
             SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HHmmss.SSS");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HH:mm:ss.SSS");
             String currentDateandTime = sdf.format(new Date());
 // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
@@ -151,7 +151,7 @@ public class MyServiceMQTT extends Service {
 
 // Insert the new row, returning the primary key value of the new row
             long newRowId = db.insert(TABLE_NAME, null, values);
-            Log.d(TAG,TABLE_NAME+"-insert: "+newRowId);
+            Log.d(TAG,TABLE_NAME+"_insert: "+newRowId);
         }
 
         public void Read(String TABLE_NAME){
@@ -169,7 +169,7 @@ public class MyServiceMQTT extends Service {
                         cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry._ID));
                 itemIds.add(itemId);
             }
-            Log.d(TAG,"item: "+itemIds.toString());
+            //Log.d(TAG,"item: "+itemIds.toString());
             cursor.close();
 
         }

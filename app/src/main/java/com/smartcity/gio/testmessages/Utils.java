@@ -10,7 +10,7 @@ import android.util.Log;
 public class Utils {
 
     private static final String ipglobal ="beagons.uni.edu.pe";
-    private static final String iplocal ="192.168.1.109";
+    private static final String iplocal ="192.168.1.102";
     private static String userMqtt ="C001";
     private static String passMqtt ="100C";
     private static String topicMqtt ="C001/Temperatura";
