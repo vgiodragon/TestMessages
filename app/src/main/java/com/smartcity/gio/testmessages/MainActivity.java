@@ -37,7 +37,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String[] PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.WAKE_LOCK,Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.WAKE_LOCK,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
     int PERMISSION_ALL = 4;
     private final int code_request=1234;
 
@@ -74,14 +76,13 @@ public class MainActivity extends AppCompatActivity {
 
         String root = Environment.getExternalStorageDirectory().toString();
         File myDir = new File(root + "/Beagons");
-        Log.d("GIODEBUG","root"+root);
-        String filename = "beagonsglobal.csv";
+        String filename = Utils.getTableName()+".csv";
 
         File file = new File (myDir, filename);
         try {
             FileOutputStream out = new FileOutputStream(file);
             //out.write(string.getBytes());
-            ArrayList<Publicacion>publicacions = Read("beagonsglobal");
+            ArrayList<Publicacion>publicacions = Read(Utils.getTableName());
 
             for (Publicacion publicacion : publicacions)
                 out.write(publicacion.toString().getBytes());
@@ -168,8 +169,7 @@ public class MainActivity extends AppCompatActivity {
                     String hora2[]=jsonObject.getString("date").split(" ");
                     String fecha_llegada = horat[0].substring(0,2)+"/"
                             +horat[0].substring(2,4)+"/"+horat[0].substring(4);
-                    String hora_llegada = horat[1].substring(0,2)+":"
-                            +horat[1].substring(2,4)+":"+horat[1].substring(4);
+                    String hora_llegada = horat[1];
 
                     String fecha_envio2 = hora2[0].replace("-","/");
                     Publicacion mpublicacion =new Publicacion(fecha_llegada,hora_llegada,

@@ -47,7 +47,7 @@ public class MyServiceMQTT extends Service {
         //Always write your long running tasks in a separate thread, to avoid ANR
         //Utils.StartSubcriptiontoAlarms(this);
         Log.d(TAG,"Suscripcion !!");
-        subcriptorGlobal = new Subcriptor(getBaseContext(),Utils.getIpglobal(),"beagonsglobal");
+        subcriptorGlobal = new Subcriptor(getBaseContext(),Utils.getIp(),Utils.getTableName());
         //subcriptorLocal = new Subcriptor(getBaseContext(),Utils.getIplocal(),"beagonslocal");
 
         subcriptorGlobal.creoClienteMQTT();
@@ -87,12 +87,13 @@ public class MyServiceMQTT extends Service {
         public void creoClienteMQTT(){
             int random= (int) (Math.random()*123456);
             mqttAndroidClient
-                    = new MqttAndroidClient(ctx,  "tcp://"+
+                    = new MqttAndroidClient(getApplicationContext(),  "tcp://"+
                     ip+":1883", "GioMovil"+random);
             MqttConnectOptions options = new MqttConnectOptions();
-            options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1);
+            options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1_1);
             options.setUserName(Utils.getUserMqtt());
             options.setPassword(Utils.getPassMqtt().toCharArray());
+            options.setCleanSession(false);
             options.setAutomaticReconnect(true);
 
             mqttAndroidClient.setCallback(new MqttCallback() {
