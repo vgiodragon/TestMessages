@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderDbHelper;
 
+import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,8 +41,9 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.WAKE_LOCK,
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
-    int PERMISSION_ALL = 4;
+    int PERMISSION_ALL = 5;
     private final int code_request=1234;
+    Subcriptor subcriptor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,18 +59,24 @@ public class MainActivity extends AppCompatActivity {
         //Insert(TABLE_NAME);
         //Read(TABLE_NAME);
 
-        //Intent intent = new Intent(this, MyServiceMQTT.class);
         //startService(intent);
     }
 
     public void startService(View view){
-        Intent intent = new Intent(this, MyServiceMQTT.class);
-        startService(intent);
+        //Intent intent = new Intent(this, MyServiceMQTT.class);
+        //startService(intent);
+        subcriptor = new Subcriptor(getApplicationContext(), Utils.getIp(), Utils.getTableName(),
+                new MqttDefaultFilePersistence(getDir("mqtt", MODE_PRIVATE).getAbsolutePath()));
+        subcriptor.creoClienteMQTT();
+
     }
 
     public void stopService(View view){
-        Intent intent = new Intent(this, MyServiceMQTT.class);
-        stopService(intent);
+        //Intent intent = new Intent(this, MyServiceMQTT.class);
+        //stopService(intent);
+        if(subcriptor!=null){
+            subcriptor.CancelarSuscripcion();
+        }
     }
 
     public void saveFile(View view){
@@ -126,22 +134,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void Insert(String TABLE_NAME){
-        // Gets the data repository in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HHmmss.SSS");
-        String currentDateandTime = sdf.format(new Date());
-// Create a new map of values, where column names are the keys
-        ContentValues values = new ContentValues();
-        values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE, String.valueOf(currentDateandTime));
-        values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE, "{Esto es un JSON}");
-
-// Insert the new row, returning the primary key value of the new row
-        long newRowId = db.insert(TABLE_NAME, null, values);
-        Log.d(TAG,"insert: "+newRowId);
-    }
-
     public ArrayList<Publicacion> Read(String TABLE_NAME){
         mDbHelper = new FeedReaderDbHelper(getApplicationContext(),TABLE_NAME);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -182,13 +174,12 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             }
-
-        //Log.d(TAG,"item: "+itemIds.toString());
-        //Log.d(TAG,"elemtns: "+elemtns.toString());
         Log.d(TAG,"size: "+elemtns.size());
         cursor.close();
         return elemtns;
     }
+
+
 }
 
 

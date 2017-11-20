@@ -23,14 +23,10 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".MyServiceMQTT"
-            android:enabled="true"
-            android:exported="true"></service>
+
         <!-- Mqtt Service -->
         <service
-            android:name="org.eclipse.paho.android.service.MqttService"
-            android:enabled="true"/>
+            android:name="org.eclipse.paho.android.service.MqttService" />
     </application>
 
 </manifest>
