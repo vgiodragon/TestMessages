@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
@@ -19,13 +20,13 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by gio on 11/17/17.
@@ -38,13 +39,19 @@ public class Subcriptor{
     FeedReaderDbHelper mDbHelper;
     String TABLE_NAME;
     MqttDefaultFilePersistence filePersistence;
+    TextView norecibidos;
+    Double contador;
 
-    public Subcriptor(Context ctx, String ip,String TABLE_NAME,MqttDefaultFilePersistence filePersistence) {
+
+    public Subcriptor(Context ctx, String ip,String TABLE_NAME,
+                      MqttDefaultFilePersistence filePersistence, TextView norecibidos) {
         this.ctx = ctx;
         this.ip = ip;
         this.TABLE_NAME = TABLE_NAME;
         mDbHelper = new FeedReaderDbHelper(ctx,TABLE_NAME);
         this.filePersistence = filePersistence;
+        this.norecibidos = norecibidos;
+        contador= Double.valueOf(0f);
     }
 
     public void creoClienteMQTT(){
@@ -57,10 +64,10 @@ public class Subcriptor{
         options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1_1);
         options.setUserName(Utils.getUserMqtt());
         options.setPassword(Utils.getPassMqtt().toCharArray());
-        options.setCleanSession(true);
+        options.setCleanSession(false);
 
         options.setAutomaticReconnect(true);
-        options.setKeepAliveInterval(120000);
+        options.setKeepAliveInterval(20000);
         mqttAndroidClient.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
@@ -72,7 +79,7 @@ public class Subcriptor{
                 //Log.d("GIODEBUG_MQTT_SA","creoClienteMQTT_Llego del topic " + topic + ": " + new String(message.getPayload()));
                 // Store!!
                 Insert(TABLE_NAME,new String(message.getPayload()));
-                Read(TABLE_NAME);
+                //Read(TABLE_NAME);
             }
 
             @Override
@@ -119,6 +126,22 @@ public class Subcriptor{
 // Insert the new row, returning the primary key value of the new row
         long newRowId = db.insert(TABLE_NAME, null, values);
         Log.d(TAG,TABLE_NAME+"_insert: "+newRowId);
+
+        try {
+            JSONObject jsonObject = new JSONObject(mnsj);
+            Double nuevo = jsonObject.getDouble("value");
+            nuevo -=1.01f;
+            String norecived = "";
+            while( nuevo > contador){
+                norecived = nuevo +" "+String.valueOf(currentDateandTime)+"\n"+ norecived;
+                nuevo -=1.f;
+            }
+            norecibidos.setText(norecibidos.getText()+norecived);
+
+            contador = jsonObject.getDouble("value");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         Toast.makeText(ctx,"insertado",Toast.LENGTH_SHORT).show();
     }
 

@@ -14,6 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
@@ -27,10 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG="GIODEBUG";
@@ -44,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     int PERMISSION_ALL = 5;
     private final int code_request=1234;
     Subcriptor subcriptor;
+    TextView norecibido;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +52,10 @@ public class MainActivity extends AppCompatActivity {
         if(!hasPermissions(this, PERMISSIONS))
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
 
+        norecibido = (TextView) findViewById(R.id.tVNoRecibido);
+        norecibido.setText("");
+        TextView zona = (TextView) findViewById(R.id.tvZona);
+        zona.setText(Utils.getTableName());
         //String TABLE_NAME = "beagonsglobal";
         //mDbHelper = new FeedReaderDbHelper(getApplicationContext(),TABLE_NAME);
 
@@ -66,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         //Intent intent = new Intent(this, MyServiceMQTT.class);
         //startService(intent);
         subcriptor = new Subcriptor(getApplicationContext(), Utils.getIp(), Utils.getTableName(),
-                new MqttDefaultFilePersistence(getDir("mqtt", MODE_PRIVATE).getAbsolutePath()));
+                new MqttDefaultFilePersistence(getDir("mqtt", MODE_PRIVATE).getAbsolutePath()),norecibido);
         subcriptor.creoClienteMQTT();
 
     }
@@ -138,8 +141,6 @@ public class MainActivity extends AppCompatActivity {
         mDbHelper = new FeedReaderDbHelper(getApplicationContext(),TABLE_NAME);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         // How you want the results sorted in the resulting Cursor
-        String sortOrder =
-                FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE + " DESC";
 
         Cursor  cursor = db.rawQuery("select * from "+TABLE_NAME,null);
 // Define a projection that specifies which columns from the database
@@ -178,6 +179,8 @@ public class MainActivity extends AppCompatActivity {
         cursor.close();
         return elemtns;
     }
+
+
 
 
 }
