@@ -78,6 +78,7 @@ public class Subcriptor{
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 //Log.d("GIODEBUG_MQTT_SA","creoClienteMQTT_Llego del topic " + topic + ": " + new String(message.getPayload()));
                 // Store!!
+                
                 Insert(TABLE_NAME,new String(message.getPayload()));
                 //Read(TABLE_NAME);
             }
@@ -94,6 +95,8 @@ public class Subcriptor{
                 public void onSuccess(IMqttToken asyncActionToken) {
                     // We are connected
                     Log.d("GIODEBUG_MQTT_SA", "IMqttActionListener_onSuccess_"+Utils.getTopicMqtt()+" on");
+
+                    Toast.makeText(ctx,"CONECTADO!",Toast.LENGTH_LONG).show();
                     try {
                         mqttAndroidClient.subscribe(Utils.getTopicMqtt(), 0);
                     } catch (MqttException e) {

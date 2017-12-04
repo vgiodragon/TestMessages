@@ -17,10 +17,18 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderDbHelper;
 
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,7 +36,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG="GIODEBUG";
@@ -56,6 +66,37 @@ public class MainActivity extends AppCompatActivity {
         norecibido.setText("");
         TextView zona = (TextView) findViewById(R.id.tvZona);
         zona.setText(Utils.getTableName());
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url ="http://pool.ntp.org";
+
+// Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // Display the first 500 characters of the response string.
+                        //mTextView.setText("Response is: "+ response.substring(0,500));
+                        Log.d(TAG,"output3: "+response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG,"output3: ERROR");
+            }
+        });
+// Add the request to the RequestQueue.
+        queue.add(stringRequest);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HH:mm:ss.SSS");
+        DateTimeZone zone = DateTimeZone.forID ( "-05:00" );
+
+
+
+        String currentDateandTime = sdf.format(new Date());
+        DateTime dateTime = new DateTime( zone );
+        String output = dateTime.toLocalTime ().toString ();
+//String.valueOf(currentDateandTime)
+        Log.d(TAG,"output: "+output);
+        Log.d(TAG,"output2: "+String.valueOf(currentDateandTime));
         //String TABLE_NAME = "beagonsglobal";
         //mDbHelper = new FeedReaderDbHelper(getApplicationContext(),TABLE_NAME);
 
