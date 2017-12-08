@@ -1,9 +1,7 @@
 package com.smartcity.gio.testmessages;
 
 import android.Manifest;
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -23,6 +21,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.instacart.library.truetime.TrueTimeRx;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderDbHelper;
 
@@ -36,9 +35,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG="GIODEBUG";
@@ -53,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private final int code_request=1234;
     Subcriptor subcriptor;
     TextView norecibido;
+    private Observable<Date> dateObservable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,9 +73,7 @@ public class MainActivity extends AppCompatActivity {
         norecibido.setText("");
         TextView zona = (TextView) findViewById(R.id.tvZona);
         zona.setText(Utils.getTableName());
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://pool.ntp.org";
-
+        /*
 // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
@@ -86,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
         });
 // Add the request to the RequestQueue.
         queue.add(stringRequest);
+        */
         SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HH:mm:ss.SSS");
         DateTimeZone zone = DateTimeZone.forID ( "-05:00" );
 
@@ -104,6 +110,18 @@ public class MainActivity extends AppCompatActivity {
         //Read(TABLE_NAME);
 
         //startService(intent);
+
+
+                TrueTimeRx.build()
+                .initializeRx("time.google.com")
+                .subscribeOn(Schedulers.io())
+                .subscribe(date -> {
+                    Log.d(TAG, "output_3 TrueTime was initialized and we have a time: " + date);
+                }, throwable -> {
+                    throwable.printStackTrace();
+                });
+
+
     }
 
     public void startService(View view){
@@ -121,6 +139,9 @@ public class MainActivity extends AppCompatActivity {
         if(subcriptor!=null){
             subcriptor.CancelarSuscripcion();
         }
+        Date trueTime = TrueTimeRx.now();
+
+        Log.d(TAG, "output_3 TrueTime was initialized and we have a time: " + trueTime);
     }
 
     public void saveFile(View view){
