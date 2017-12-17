@@ -22,7 +22,7 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
     private String SQL_DELETE_ENTRIES ;
                     //="DROP TABLE IF EXISTS " + FeedReaderContract.FeedEntry.TABLE_NAME;
 
-    public static final int DATABASE_VERSION = 7;
+    public static final int DATABASE_VERSION = 8;
     public static final String DATABASE_NAME = "Beagons.db";
 
     public FeedReaderDbHelper(Context context, String TABLE_NAME) {
@@ -48,6 +48,7 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
     public void setSQL_CREATE_ENTRIES(String TABLE_NAME) {
         SQL_CREATE_ENTRIES = "CREATE TABLE " + TABLE_NAME + " (" +
                 FeedReaderContract.FeedEntry._ID + " INTEGER PRIMARY KEY," +
+                FeedReaderContract.FeedEntry.COLUMN_NAME_NTP + " TEXT," +
                 FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE + " TEXT," +
                 FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE + " TEXT)";
     }

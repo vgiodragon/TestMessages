@@ -9,13 +9,11 @@ import android.util.Log;
 
 public class Utils {
 
-
-
     private static String userMqtt ="C001";
     private static String passMqtt ="100C";
     private static String topicMqtt ="C001/Temperatura";
     private static String TABLE_NAME="beagonslocal";
-    private static final String ip ="192.168.1.102";
+    private static final String ip ="192.168.1.103";
     //private static String TABLE_NAME="beagonsglobal";
     //private static final String ip ="beagons.uni.edu.pe";
 

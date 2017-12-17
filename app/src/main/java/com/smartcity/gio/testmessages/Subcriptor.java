@@ -8,6 +8,7 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.instacart.library.truetime.TrueTimeRx;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderDbHelper;
 
@@ -27,6 +28,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by gio on 11/17/17.
@@ -52,6 +55,15 @@ public class Subcriptor{
         this.filePersistence = filePersistence;
         this.norecibidos = norecibidos;
         contador= Double.valueOf(0f);
+
+        TrueTimeRx.build()
+                .initializeRx("time.google.com")
+                .subscribeOn(Schedulers.io())
+                .subscribe(date -> {
+                    Log.d(TAG, "output_3 TrueTime was initialized and we have a time: " + date);
+                }, throwable -> {
+                    throwable.printStackTrace();
+                });
     }
 
     public void creoClienteMQTT(){
@@ -78,8 +90,8 @@ public class Subcriptor{
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 //Log.d("GIODEBUG_MQTT_SA","creoClienteMQTT_Llego del topic " + topic + ": " + new String(message.getPayload()));
                 // Store!!
-                
-                Insert(TABLE_NAME,new String(message.getPayload()));
+                Date trueTime = TrueTimeRx.now();
+                Insert(TABLE_NAME,new String(message.getPayload()),trueTime);
                 //Read(TABLE_NAME);
             }
 
@@ -115,20 +127,23 @@ public class Subcriptor{
         }
         Log.d("GIODEBUG_MQTT_SA","Suscribiendo");
     }
-    public void Insert(String TABLE_NAME, String mnsj){
+
+    public void Insert(String TABLE_NAME, String mnsj, Date ntp){
         // Gets the data repository in write mode
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HH:mm:ss.SSS");
         String currentDateandTime = sdf.format(new Date());
+        String ntpTime = sdf.format(ntp);
 // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
+        values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_NTP, String.valueOf(ntpTime));
         values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE, String.valueOf(currentDateandTime));
         values.put(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE,mnsj);
 
 // Insert the new row, returning the primary key value of the new row
         long newRowId = db.insert(TABLE_NAME, null, values);
-        Log.d(TAG,TABLE_NAME+"_insert: "+newRowId);
+        Log.d(TAG,TABLE_NAME+"_insert: "+newRowId+"_"+ntpTime);
 
         try {
             JSONObject jsonObject = new JSONObject(mnsj);

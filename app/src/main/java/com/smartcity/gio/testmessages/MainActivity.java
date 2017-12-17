@@ -15,19 +15,10 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.instacart.library.truetime.TrueTimeRx;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderContract;
 import com.smartcity.gio.testmessages.AccessDataBase.FeedReaderDbHelper;
 
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -35,16 +26,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG="GIODEBUG";
@@ -73,55 +58,6 @@ public class MainActivity extends AppCompatActivity {
         norecibido.setText("");
         TextView zona = (TextView) findViewById(R.id.tvZona);
         zona.setText(Utils.getTableName());
-        /*
-// Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        //mTextView.setText("Response is: "+ response.substring(0,500));
-                        Log.d(TAG,"output3: "+response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG,"output3: ERROR");
-            }
-        });
-// Add the request to the RequestQueue.
-        queue.add(stringRequest);
-        */
-        SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd_HH:mm:ss.SSS");
-        DateTimeZone zone = DateTimeZone.forID ( "-05:00" );
-
-
-
-        String currentDateandTime = sdf.format(new Date());
-        DateTime dateTime = new DateTime( zone );
-        String output = dateTime.toLocalTime ().toString ();
-//String.valueOf(currentDateandTime)
-        Log.d(TAG,"output: "+output);
-        Log.d(TAG,"output2: "+String.valueOf(currentDateandTime));
-        //String TABLE_NAME = "beagonsglobal";
-        //mDbHelper = new FeedReaderDbHelper(getApplicationContext(),TABLE_NAME);
-
-        //Insert(TABLE_NAME);
-        //Read(TABLE_NAME);
-
-        //startService(intent);
-
-
-                TrueTimeRx.build()
-                .initializeRx("time.google.com")
-                .subscribeOn(Schedulers.io())
-                .subscribe(date -> {
-                    Log.d(TAG, "output_3 TrueTime was initialized and we have a time: " + date);
-                }, throwable -> {
-                    throwable.printStackTrace();
-                });
-
-
     }
 
     public void startService(View view){
@@ -139,9 +75,6 @@ public class MainActivity extends AppCompatActivity {
         if(subcriptor!=null){
             subcriptor.CancelarSuscripcion();
         }
-        Date trueTime = TrueTimeRx.now();
-
-        Log.d(TAG, "output_3 TrueTime was initialized and we have a time: " + trueTime);
     }
 
     public void saveFile(View view){
@@ -156,7 +89,8 @@ public class MainActivity extends AppCompatActivity {
             FileOutputStream out = new FileOutputStream(file);
             //out.write(string.getBytes());
             ArrayList<Publicacion>publicacions = Read(Utils.getTableName());
-
+            String titlesCSV = "fecha_llegada, hora_llegada, fecha_llegada_ntp, hora_llegada_ntp, fecha_envio, hora_envio, value\n";
+            out.write(titlesCSV.getBytes());
             for (Publicacion publicacion : publicacions)
                 out.write(publicacion.toString().getBytes());
             out.close();
@@ -213,12 +147,16 @@ public class MainActivity extends AppCompatActivity {
         while(cursor.moveToNext()) {
             String name =cursor.getString(
                     cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry.COLUMN_NAME_SUBTITLE));
+            String horaNTP =cursor.getString(
+                    cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry.COLUMN_NAME_NTP));
+
             String hora =cursor.getString(
                     cursor.getColumnIndexOrThrow(FeedReaderContract.FeedEntry.COLUMN_NAME_TITLE));
 
             //elemtns.add(hora+"+"+name);
 
                 String horat[] = hora.split("_");
+                String horat2[] = horaNTP.split("_");
                 try {
                     JSONObject jsonObject = new JSONObject(name);
                     String hora2[]=jsonObject.getString("date").split(" ");
@@ -226,8 +164,13 @@ public class MainActivity extends AppCompatActivity {
                             +horat[0].substring(2,4)+"/"+horat[0].substring(4);
                     String hora_llegada = horat[1];
 
+                    String fecha_llegada_ntp = horat2[0].substring(0,2)+"/"
+                            +horat2[0].substring(2,4)+"/"+horat2[0].substring(4);
+                    String hora_llegada_ntp = horat2[1];
+
                     String fecha_envio2 = hora2[0].replace("-","/");
                     Publicacion mpublicacion =new Publicacion(fecha_llegada,hora_llegada,
+                            fecha_llegada_ntp,hora_llegada_ntp,
                             fecha_envio2.substring(2),hora2[1],jsonObject.getDouble("value"));
                     elemtns.add(mpublicacion);
 
